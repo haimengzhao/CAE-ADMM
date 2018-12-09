@@ -19,7 +19,7 @@ class CAEP(nn.Module):
         self.E_Conv_3 = conv_downsample(128, 64)  # 128,32,32 => 64,16,16
 
         # max_bpp = 64*16*16/128/128 = 1
-        self.quantize = Quantizer()
+        self.Quantize = Quantizer()
 
         # Decoder
         self.D_SubPix_1 = sub_pix(64, 128, 2)  # 64,16,16 => 128,32,32
@@ -59,7 +59,7 @@ class CAEP(nn.Module):
 
         if self.prune:
             x = self.Pruner(x, self.threshold)
-        x = self.quantize(x)
+        x = self.Quantize(x)
 
         y = self.D_SubPix_1(x)
         y = self.D_Res(y)

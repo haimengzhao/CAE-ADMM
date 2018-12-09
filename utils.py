@@ -3,8 +3,15 @@ from torch import nn
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
+import glob
 import numpy as np
 from huffmancoding import huffman_encode, huffman_decode
+from torchvision import transforms
+
+
+def save_imgs(imgs, to_size, name):
+    imgs = imgs.view(imgs.size(0), *to_size)
+    save_image(imgs, name)
 
 
 def conv_downsample(in_planes, out_planes):
@@ -91,3 +98,76 @@ class Bottleneck(nn.Module):
 
 def res_layers(planes, num_blocks, ):
     return nn.Sequential(*[Bottleneck(planes) for i in range(num_blocks)])
+
+
+class BSDS500Crop128(Dataset):
+    def __init__(self, folder_path):
+        self.files = sorted(glob.glob('%s/*.*' % folder_path))
+        self.transform = transforms.Compose([
+            transforms.RandomCrop(128),
+            transforms.ToTensor()
+        ])
+
+    def __getitem__(self, index):
+        path = self.files[index % len(self.files)]
+        img = np.array(Image.open(path))
+        img = self.transform(img)
+        return img
+
+    def __len__(self):
+        return len(self.files)
+
+
+class Kodak(Dataset):
+    def __init__(self, folder_path):
+        self.files = sorted(glob.glob('%s/*.*' % folder_path))
+        self.transforms = transforms.Compose([
+            transforms.ToTensor()
+        ])
+
+    def __getitem__(self, index):
+        path = self.files[index % len(self.files)]
+        img = np.array(Image.open(path))
+        if img.shape[0] != 768:
+            img = img.transpose((1, 0, 2))
+
+        img = self.transforms(img)
+
+        # (768,512)--> 6*4 128*128
+
+        patches = torch.Tensor(torch.split(torch.Tensor(torch.split(img, 6, dim=1)), 4, dim=3))
+        patches = patches.permute((1, 0, 2, 3, 4))
+
+        return img, patches, path
+
+    def get_random(self):
+        i = np.random.randint(0, len(self.files))
+        return self[i]
+
+    def __len__(self):
+        return len(self.files)
+
+
+def compute_bpp(code, batch_size, prefix, dir='./code/', save=True):
+    # Huffman coding
+    c = code.data.cpu().numpy().astype(np.int32)
+    tree_size, data_size = huffman_encode(c, prefix, save=save)
+    bpp = (tree_size + data_size) / batch_size / 128 / 128 * 8
+    return bpp
+
+
+def save_kodak_img(model, img, index, patches, writer, ei):
+    # save a Kodak img
+    stacki = []
+    for i in range(6):
+        stackj = []
+        for j in range(4):
+            x = torch.Tensor(patches[index, i, j, :, :, :].unsqueeze(0)).cuda()
+            y, c = model(x)
+            stackj.append(y.squeeze(0).cpu().data * 255)
+        stacki.append(torch.cat(stackj, dim=2))
+    out = torch.cat(stacki, dim=1)
+    y = torch.cat((img[index], out), dim=2).unsqueeze(0)
+    save_imgs(imgs=y, to_size=(3, 768, 2 * 512),
+              name=f"./output/test_{index}_{ei}.png")
+    writer.add_image(f'img/test_{index}', y, ei)
