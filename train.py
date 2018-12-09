@@ -34,7 +34,7 @@ def train(args):
         batch_size=testset.__len__(),
         num_workers=args.num_workers)
     print(f"Done Setup Training DataLoader: {len(dataloader)} batches of size {args.batch_size}")
-    print(f"Done Setup Testing DataLoader: {len(testset)}")
+    print(f"Done Setup Testing DataLoader: {len(testset)} Images")
 
     MSE = nn.MSELoss()
     SSIM = pytorch_msssim.SSIM().cuda()
@@ -136,9 +136,6 @@ def train(args):
                     avg_msssim += msssim.item() / 24
                     avg_peanalty += peanalty.item() / 24
                     avg_bpp += bpp / 24
-
-            print('*[%3d/%3d]The average SSIM in Kodak: %f, Loss: %f, BPP: %f' %
-                  (ei, args.num_epochs, avg_ssim, avg_loss, avg_bpp))
             
             save_kodak_img(model, img, 0, patches, writer, ei)
             save_kodak_img(model, img, 10, patches, writer, ei)
@@ -149,7 +146,8 @@ def train(args):
             val_msssim += avg_msssim
             val_peanalty += avg_peanalty
             val_bpp += avg_bpp
-
+        print('*Kodak: [%3d/%3d] Loss: %f, SSIM: %f, MSSSIM: %f, Norm of Code: %f, BPP: %2f' %
+              (ei, args.num_epochs, val_loss, val_ssim, val_msssim, val_peanalty, val_bpp))
         writer.add_scalar('test/loss', val_loss, ei)
         writer.add_scalar('test/ssim', val_ssim, ei)
         writer.add_scalar('test/msssim', val_msssim, ei)

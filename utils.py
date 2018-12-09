@@ -39,18 +39,15 @@ def sub_pix(in_planes, out_planes, upscale_factor):
     )
 
 
-class Quantizer(torch.autograd.Function):
-    def forward(ctx, x):
-        r = torch.rand(x.shape)
+def quantize(x):
+    with torch.no_grad():
+        r = torch.rand(x.shape).cuda()
         p = x
-        eps = torch.zeros(x.shape)
+        eps = torch.zeros(x.shape).cuda()
         eps[r <= p] = (1 - x)[r <= p]
         eps[r > p] = (-x)[r > p]
-        y = x + eps
-        return y
-
-    def backward(ctx, grad_outputs):
-        return grad_outputs
+    y = x + eps
+    return y
 
 
 class MaskedPruner(torch.autograd.Function):
@@ -110,7 +107,7 @@ class BSDS500Crop128(Dataset):
 
     def __getitem__(self, index):
         path = self.files[index % len(self.files)]
-        img = np.array(Image.open(path))
+        img = Image.open(path)
         img = self.transform(img)
         return img
 
@@ -121,22 +118,24 @@ class BSDS500Crop128(Dataset):
 class Kodak(Dataset):
     def __init__(self, folder_path):
         self.files = sorted(glob.glob('%s/*.*' % folder_path))
-        self.transforms = transforms.Compose([
-            transforms.ToTensor()
-        ])
 
     def __getitem__(self, index):
         path = self.files[index % len(self.files)]
         img = np.array(Image.open(path))
         if img.shape[0] != 768:
             img = img.transpose((1, 0, 2))
+        h, w, c = img.shape
 
-        img = self.transforms(img)
+        img = img / 255.0
 
         # (768,512)--> 6*4 128*128
 
-        patches = torch.Tensor(torch.split(torch.Tensor(torch.split(img, 6, dim=1)), 4, dim=3))
-        patches = patches.permute((1, 0, 2, 3, 4))
+        patches = np.array(np.split(np.array(np.split(img, 6, axis=0)), 4, axis=2))
+        patches = np.transpose(patches, (1, 0, 4, 2, 3))
+
+        img = np.transpose(img, (2, 0, 1))
+        img = torch.from_numpy(img).float()
+        patches = torch.from_numpy(patches).float()
 
         return img, patches, path
 
@@ -151,7 +150,7 @@ class Kodak(Dataset):
 def compute_bpp(code, batch_size, prefix, dir='./code/', save=True):
     # Huffman coding
     c = code.data.cpu().numpy().astype(np.int32)
-    tree_size, data_size = huffman_encode(c, prefix, save=save)
+    tree_size, data_size = huffman_encode(c, prefix, save_dir=dir, save=save)
     bpp = (tree_size + data_size) / batch_size / 128 / 128 * 8
     return bpp
 
