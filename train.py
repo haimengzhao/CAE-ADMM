@@ -28,13 +28,13 @@ def train(args):
         batch_size=args.batch_size,
         shuffle=args.shuffle,
         num_workers=args.num_workers)
-    testset = Kodak(args.testset_path)
-    testloader = DataLoader(
-        testset,
-        batch_size=testset.__len__(),
-        num_workers=args.num_workers)
-    print(f"Done Setup Training DataLoader: {len(dataloader)} batches of size {args.batch_size}")
-    print(f"Done Setup Testing DataLoader: {len(testset)} Images")
+    # testset = Kodak(args.testset_path)
+    # testloader = DataLoader(
+    #     testset,
+    #     batch_size=testset.__len__(),
+    #     num_workers=args.num_workers)
+    # print(f"Done Setup Training DataLoader: {len(dataloader)} batches of size {args.batch_size}")
+    # print(f"Done Setup Testing DataLoader: {len(testset)} Images")
 
     MSE = nn.MSELoss()
     SSIM = pytorch_msssim.SSIM().cuda()
@@ -78,7 +78,7 @@ def train(args):
             ssim = SSIM(x, y)
             msssim = MSSSIM(x, y)
             peanalty = rho / 2 * torch.norm(c, 2)
-            bpp = compute_bpp(c, x.shape[0], 'train', save=False)
+            bpp = compute_bpp(c, x.shape[0])
 
             loss = mse
 
@@ -87,7 +87,7 @@ def train(args):
             optimizer.step()
 
             print('[%3d/%3d][%5d/%5d] Loss: %f, SSIM: %f, MSSSIM: %f, Norm of Code: %f, BPP: %2f' %
-                  (ei, args.num_epochs, bi, len(dataloader), loss, ssim, msssim, peanalty, bpp))
+                  (ei, args.num_epochs + args.res_epoch, bi, len(dataloader), loss, ssim, msssim, peanalty, bpp))
             writer.add_scalar('batch_train/loss', loss, ei * len(dataloader) + bi)
             writer.add_scalar('batch_train/ssim', ssim, ei * len(dataloader) + bi)
             writer.add_scalar('batch_train/msssim', msssim, ei * len(dataloader) + bi)
@@ -128,7 +128,7 @@ def train(args):
                     ssim = SSIM(x, y)
                     msssim = MSSSIM(x, y)
                     peanalty = rho / 2 * torch.norm(c, 2)
-                    bpp = compute_bpp(c, x.shape[0], f'Kodak_{i}_{j}', save=True)
+                    bpp = compute_bpp(c, x.shape[0])
                     loss = mse
 
                     avg_loss += loss.item() / 24
@@ -147,7 +147,7 @@ def train(args):
             val_peanalty += avg_peanalty
             val_bpp += avg_bpp
         print('*Kodak: [%3d/%3d] Loss: %f, SSIM: %f, MSSSIM: %f, Norm of Code: %f, BPP: %2f' %
-              (ei, args.num_epochs, val_loss, val_ssim, val_msssim, val_peanalty, val_bpp))
+              (ei, args.num_epochs + args.res_epoch, val_loss, val_ssim, val_msssim, val_peanalty, val_bpp))
         writer.add_scalar('test/loss', val_loss, ei)
         writer.add_scalar('test/ssim', val_ssim, ei)
         writer.add_scalar('test/msssim', val_msssim, ei)
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_epochs', type=int, default=10)
     parser.add_argument('--res_epoch', type=int, default=0)
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--learning_rate', type=float, default=1e-4)
     parser.add_argument('--load', action='store_true')
     parser.add_argument('--save_every', type=int, default=50)

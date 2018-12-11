@@ -17,15 +17,18 @@ class CAEP(nn.Module):
         self.E_PReLU_2 = nn.PReLU()
         self.E_Res = res_layers(128, num_blocks=self.num_resblocks)
         self.E_Conv_3 = conv_downsample(128, 64)  # 128,32,32 => 64,16,16
+        self.relu = nn.ReLU()
 
         # max_bpp = 64*16*16/128/128 = 1
 
         # Decoder
         self.D_SubPix_1 = sub_pix(64, 128, 2)  # 64,16,16 => 128,32,32
+        self.D_PReLU_1 = nn.PReLU()
         self.D_Res = res_layers(128, num_blocks=self.num_resblocks)
         self.D_SubPix_2 = sub_pix(128, 64, 2)  # 128,32,32 => 64,64,64
         self.D_PReLU_2 = nn.PReLU()
         self.D_SubPix_3 = sub_pix(64, 3, 2)  # 64,64,64 => 3,128,128
+        self.tanh = nn.Tanh()
 
         self.__init_parameters__()
 
@@ -61,9 +64,11 @@ class CAEP(nn.Module):
         x = quantize(x)
 
         y = self.D_SubPix_1(x)
+        y = self.D_PReLU_1(y)
         y = self.D_Res(y)
         y = self.D_SubPix_2(y)
         y = self.D_PReLU_2(y)
         y = self.D_SubPix_3(y)
+        y = (self.tanh(y) + 1) / 2
 
         return y, x

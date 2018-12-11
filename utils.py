@@ -7,6 +7,8 @@ import glob
 import numpy as np
 from huffmancoding import huffman_encode, huffman_decode
 from torchvision import transforms
+import sys
+from collections import Counter
 
 
 def save_imgs(imgs, to_size, name):
@@ -41,11 +43,12 @@ def sub_pix(in_planes, out_planes, upscale_factor):
 
 def quantize(x):
     with torch.no_grad():
+        floor = x.floor()
         r = torch.rand(x.shape).cuda()
-        p = x
+        p = x - floor
         eps = torch.zeros(x.shape).cuda()
-        eps[r <= p] = (1 - x)[r <= p]
-        eps[r > p] = (-x)[r > p]
+        eps[r <= p] = (floor + 1 - x)[r <= p]
+        eps[r > p] = (floor - x)[r > p]
     y = x + eps
     return y
 
@@ -102,6 +105,8 @@ class BSDS500Crop128(Dataset):
         self.files = sorted(glob.glob('%s/*.*' % folder_path))
         self.transform = transforms.Compose([
             transforms.RandomCrop(128),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
             transforms.ToTensor()
         ])
 
@@ -147,11 +152,18 @@ class Kodak(Dataset):
         return len(self.files)
 
 
-def compute_bpp(code, batch_size, prefix, dir='./code/', save=True):
+# def compute_bpp(code, batch_size, prefix, dir='./code/', save=True):
+def compute_bpp(code, batch_size):
     # Huffman coding
-    c = code.data.cpu().numpy().astype(np.int32)
-    tree_size, data_size = huffman_encode(c, prefix, save_dir=dir, save=save)
-    bpp = (tree_size + data_size) / batch_size / 128 / 128 * 8
+    # Not Effective
+    c = code.data.cpu().numpy().astype(np.int32).flatten()
+    # tree_size, data_size = huffman_encode(c, prefix, save_dir=dir, save=save)
+    # bpp = (tree_size + data_size) / batch_size / 128 / 128 * 8
+    # print(rle(c))
+    print(len(c))
+    print(Counter(c))
+    sys.setrecursionlimit(10000000)
+    bpp = rle(c) / batch_size / 128 / 128
     return bpp
 
 
@@ -163,7 +175,7 @@ def save_kodak_img(model, img, index, patches, writer, ei):
         for j in range(4):
             x = torch.Tensor(patches[index, i, j, :, :, :].unsqueeze(0)).cuda()
             y, c = model(x)
-            stackj.append(y.squeeze(0).cpu().data * 255)
+            stackj.append(y.squeeze(0).cpu().data)
         stacki.append(torch.cat(stackj, dim=2))
     out = torch.cat(stacki, dim=1)
     y = torch.cat((img[index], out), dim=2).unsqueeze(0)
