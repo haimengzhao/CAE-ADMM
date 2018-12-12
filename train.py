@@ -28,13 +28,13 @@ def train(args):
         batch_size=args.batch_size,
         shuffle=args.shuffle,
         num_workers=args.num_workers)
-    testset = Kodak(args.testset_path)
-    testloader = DataLoader(
-        testset,
-        batch_size=testset.__len__(),
-        num_workers=args.num_workers)
-    print(f"Done Setup Training DataLoader: {len(dataloader)} batches of size {args.batch_size}")
-    print(f"Done Setup Testing DataLoader: {len(testset)} Images")
+    # testset = Kodak(args.testset_path)
+    # testloader = DataLoader(
+    #     testset,
+    #     batch_size=testset.__len__(),
+    #     num_workers=args.num_workers)
+    # print(f"Done Setup Training DataLoader: {len(dataloader)} batches of size {args.batch_size}")
+    # print(f"Done Setup Testing DataLoader: {len(testset)} Images")
 
     MSE = nn.MSELoss()
     SSIM = pytorch_msssim.SSIM().cuda()
@@ -78,7 +78,7 @@ def train(args):
             ssim = SSIM(x, y)
             msssim = MSSSIM(x, y)
             peanalty = rho / 2 * torch.norm(c, 2)
-            bpp = compute_bpp(c, x.shape[0], f'{ei}_{bi}')
+            bpp = compute_bpp(c, x.shape[0])
 
             loss = mse
 
@@ -128,7 +128,7 @@ def train(args):
                     ssim = SSIM(x, y)
                     msssim = MSSSIM(x, y)
                     peanalty = rho / 2 * torch.norm(c, 2)
-                    bpp = compute_bpp(c, x.shape[0], f'{ei}_{bi}')
+                    bpp = compute_bpp(c, x.shape[0])
                     loss = mse
 
                     avg_loss += loss.item() / 24

@@ -9,8 +9,12 @@ from huffmancoding import huffman_encode, huffman_decode
 from torchvision import transforms
 import sys
 from collections import Counter
-from range_encoder import RangeEncoder, prob_to_cum_freq
+<<<<<<< HEAD
+from range_coder import RangeEncoder, prob_to_cum_freq
 import os
+=======
+
+>>>>>>> parent of 56c932c... Replace huffman with range encoder.
 
 def save_imgs(imgs, to_size, name):
     imgs = imgs.view(imgs.size(0), *to_size)
@@ -154,19 +158,29 @@ class Kodak(Dataset):
 
 
 # def compute_bpp(code, batch_size, prefix, dir='./code/', save=True):
-def compute_bpp(code, batch_size, name):
+def compute_bpp(code, batch_size):
     # Huffman coding
     # Not Effective
-    c = code.data.cpu().numpy().astype(np.int32).flatten()
+    c = list(code.data.cpu().numpy().astype(np.int32).flatten())
     # tree_size, data_size = huffman_encode(c, prefix, save_dir=dir, save=save)
     # bpp = (tree_size + data_size) / batch_size / 128 / 128 * 8
-    # print(rle(c))
+<<<<<<< HEAD
+    # print(rle(c))7
     prob = np.array(list(Counter(c).values())) / len(c)
     cumFreq = prob_to_cum_freq(prob)
     encoder = RangeEncoder(f'./code/{name}.txt')
+    print(cumFreq)
+    # print(c)
     encoder.encode(c, cumFreq)
     encoder.close()
     bpp = os.stat(f'./code/{name}.txt').st_size * 8 / 128 / 128 / batch_size
+=======
+    # print(rle(c))
+    print(len(c))
+    print(Counter(c))
+    sys.setrecursionlimit(10000000)
+    bpp = rle(c) / batch_size / 128 / 128
+>>>>>>> parent of 56c932c... Replace huffman with range encoder.
     return bpp
 
 
