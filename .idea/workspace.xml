@@ -24,9 +24,12 @@
         <entry file="file://$PROJECT_DIR$/utils.py">
           <provider selected="true" editor-type-id="text-editor">
 <<<<<<< HEAD
+<<<<<<< HEAD
             <state relative-caret-position="242">
               <caret line="11" column="50" selection-start-line="11" selection-start-column="50" selection-end-line="11" selection-end-column="50" />
 =======
+=======
+>>>>>>> parent of 56c932c... Replace huffman with range encoder.
             <state relative-caret-position="440">
               <caret line="166" column="4" lean-forward="true" selection-start-line="166" selection-start-column="4" selection-end-line="166" selection-end-column="4" />
               <folding>
@@ -216,6 +219,7 @@
     <entry file="file://$PROJECT_DIR$/huffmancoding.py">
       <provider selected="true" editor-type-id="text-editor">
 <<<<<<< HEAD
+<<<<<<< HEAD
         <state relative-caret-position="1694">
           <caret line="85" column="29" selection-start-line="85" selection-start-column="29" selection-end-line="85" selection-end-column="29" />
         </state>
@@ -250,6 +254,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/huffmancoding.py">
       <provider selected="true" editor-type-id="text-editor">
+=======
+>>>>>>> parent of 56c932c... Replace huffman with range encoder.
 =======
 >>>>>>> parent of 56c932c... Replace huffman with range encoder.
         <state relative-caret-position="110">
@@ -568,9 +574,12 @@
     <entry file="file://$PROJECT_DIR$/utils.py">
       <provider selected="true" editor-type-id="text-editor">
 <<<<<<< HEAD
+<<<<<<< HEAD
         <state relative-caret-position="242">
           <caret line="11" column="50" selection-start-line="11" selection-start-column="50" selection-end-line="11" selection-end-column="50" />
 =======
+=======
+>>>>>>> parent of 56c932c... Replace huffman with range encoder.
         <state relative-caret-position="440">
           <caret line="166" column="4" lean-forward="true" selection-start-line="166" selection-start-column="4" selection-end-line="166" selection-end-column="4" />
           <folding>
