@@ -78,7 +78,7 @@ def train(args):
             ssim = SSIM(x, y)
             msssim = MSSSIM(x, y)
             peanalty = rho / 2 * torch.norm(c, 2)
-            bpp = compute_bpp(c, x.shape[0], 'crop', False)
+            bpp = compute_bpp(c, x.shape[0], 'crop', save=False)
 
             loss = mse
 
@@ -128,7 +128,7 @@ def train(args):
                     ssim = SSIM(x, y)
                     msssim = MSSSIM(x, y)
                     peanalty = rho / 2 * torch.norm(c, 2)
-                    bpp = compute_bpp(c, x.shape[0], f'Kodak_patches_{i}_{j}', True)
+                    bpp = compute_bpp(c, x.shape[0], f'Kodak_patches_{i}_{j}', save=True)
                     loss = mse
 
                     avg_loss += loss.item() / 24
@@ -149,7 +149,7 @@ def train(args):
         print('*Kodak: [%3d/%3d] Loss: %f, SSIM: %f, MSSSIM: %f, Norm of Code: %f, BPP: %.2f' %
               (ei, args.num_epochs + args.res_epoch, val_loss, val_ssim, val_msssim, val_peanalty, val_bpp))
 
-        os.system('tar -jcvf code.tar.bz ./code')
+        bz = os.system('tar -jcvf ./code/code.tar.bz ./code')
         total_code_size = os.stat('./code.tar.bz').st_size
         total_bpp = total_code_size * 8 / 24 / 768 / 512
 
