@@ -185,12 +185,12 @@ def bitstr2float(bitstr):
     return struct.unpack('>f', byte_arr)[0]
 
 def int2bitstr(integer):
-    four_bytes = struct.pack('>I', integer) # bytes
+    four_bytes = struct.pack('>i', integer) # bytes
     return ''.join(f'{byte:08b}' for byte in four_bytes) # string of '0's and '1's
 
 def bitstr2int(bitstr):
     byte_arr = bytearray(int(bitstr[i:i+8], 2) for i in range(0, len(bitstr), 8))
-    return struct.unpack('>I', byte_arr)[0]
+    return struct.unpack('>i', byte_arr)[0]
 
 
 # Functions for calculating / reconstructing index diff

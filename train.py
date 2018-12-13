@@ -28,13 +28,13 @@ def train(args):
         batch_size=args.batch_size,
         shuffle=args.shuffle,
         num_workers=args.num_workers)
-    # testset = Kodak(args.testset_path)
-    # testloader = DataLoader(
-    #     testset,
-    #     batch_size=testset.__len__(),
-    #     num_workers=args.num_workers)
-    # print(f"Done Setup Training DataLoader: {len(dataloader)} batches of size {args.batch_size}")
-    # print(f"Done Setup Testing DataLoader: {len(testset)} Images")
+    testset = Kodak(args.testset_path)
+    testloader = DataLoader(
+        testset,
+        batch_size=testset.__len__(),
+        num_workers=args.num_workers)
+    print(f"Done Setup Training DataLoader: {len(dataloader)} batches of size {args.batch_size}")
+    print(f"Done Setup Testing DataLoader: {len(testset)} Images")
 
     MSE = nn.MSELoss()
     SSIM = pytorch_msssim.SSIM().cuda()
@@ -43,7 +43,7 @@ def train(args):
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=args.learning_rate,
-        weight_decay=1e-7
+        weight_decay=1e-10
     )
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer,
@@ -53,12 +53,12 @@ def train(args):
         verbose=True,
     )
 
-    writer = SummaryWriter(log_dir='TBXLog')
+    writer = SummaryWriter(log_dir=f'TBXLog/{args.exp_name}')
 
     if args.load:
-        model.load_state_dict(torch.load(f"./chkpt/model.state"))
-        optimizer.load_state_dict(torch.load(f"./chkpt/opt.state"))
-        scheduler.load_state_dict(torch.load(f"./chkpt/lr.state"))
+        model.load_state_dict(torch.load(f"./chkpt/{args.exp_name}/model.state"))
+        optimizer.load_state_dict(torch.load(f"./chkpt/{args.exp_name}/opt.state"))
+        scheduler.load_state_dict(torch.load(f"./chkpt/{args.exp_name}/lr.state"))
         print('Model Params Loaded.')
 
     model.train()
@@ -78,7 +78,7 @@ def train(args):
             ssim = SSIM(x, y)
             msssim = MSSSIM(x, y)
             peanalty = rho / 2 * torch.norm(c, 2)
-            bpp = compute_bpp(c, x.shape[0])
+            bpp = compute_bpp(c, x.shape[0], 'crop', False)
 
             loss = mse
 
@@ -128,7 +128,7 @@ def train(args):
                     ssim = SSIM(x, y)
                     msssim = MSSSIM(x, y)
                     peanalty = rho / 2 * torch.norm(c, 2)
-                    bpp = compute_bpp(c, x.shape[0])
+                    bpp = compute_bpp(c, x.shape[0], f'Kodak_patches_{i}_{j}', True)
                     loss = mse
 
                     avg_loss += loss.item() / 24
@@ -146,13 +146,19 @@ def train(args):
             val_msssim += avg_msssim
             val_peanalty += avg_peanalty
             val_bpp += avg_bpp
-        print('*Kodak: [%3d/%3d] Loss: %f, SSIM: %f, MSSSIM: %f, Norm of Code: %f, BPP: %2f' %
+        print('*Kodak: [%3d/%3d] Loss: %f, SSIM: %f, MSSSIM: %f, Norm of Code: %f, BPP: %.2f' %
               (ei, args.num_epochs + args.res_epoch, val_loss, val_ssim, val_msssim, val_peanalty, val_bpp))
+
+        os.system('tar -jcvf code.tar.bz ./code')
+        total_code_size = os.stat('./code.tar.bz').st_size
+        total_bpp = total_code_size * 8 / 24 / 768 / 512
+
         writer.add_scalar('test/loss', val_loss, ei)
         writer.add_scalar('test/ssim', val_ssim, ei)
         writer.add_scalar('test/msssim', val_msssim, ei)
         writer.add_scalar('test/norm', val_peanalty, ei)
         writer.add_scalar('test/bpp', val_bpp, ei)
+        writer.add_scalar('test/total_bpp', total_bpp, ei)
         model.train()
 
         scheduler.step(train_loss)
@@ -179,6 +185,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_path', type=str, default='../dataset')
     parser.add_argument('--testset_path', type=str, default='../Kodak')
     parser.add_argument('--num_workers', type=int, default=0)
+    parser.add_argument('--exp_name', type=str, default='exp1')
     args = parser.parse_args()
 
     os.makedirs(f"./output", exist_ok=True)
