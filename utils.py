@@ -7,6 +7,8 @@ import glob
 import numpy as np
 from huffmancoding import huffman_encode, huffman_decode
 from torchvision import transforms
+from scipy import stats
+from collections import Counter
 import sys
 import os
 
@@ -52,17 +54,6 @@ def quantize(x):
     y = x + eps
     return y
 
-
-class MaskedPruner(torch.autograd.Function):
-    def forward(ctx, input, threshold):
-        threshold.requires_grad = False
-        x = input.masked_fill_(torch.abs(input) <= threshold, 0)
-        return x
-
-    def backward(ctx, grad_output):
-        return grad_output
-
-
 class Bottleneck(nn.Module):
     def __init__(self, planes):
         super(Bottleneck, self).__init__()
@@ -72,9 +63,9 @@ class Bottleneck(nn.Module):
         self.bn2 = nn.BatchNorm2d(planes)
         self.conv3 = nn.Conv2d(planes, planes, kernel_size=1, bias=False)
         self.bn3 = nn.BatchNorm2d(planes)
-        self.relu1 = nn.RReLU(inplace=True)
-        self.relu2 = nn.RReLU(inplace=True)
-        self.relu3 = nn.RReLU(inplace=True)
+        self.relu1 = nn.PReLU()
+        self.relu2 = nn.PReLU()
+        self.relu3 = nn.PReLU()
 
     def forward(self, x):
         residual = x
@@ -156,7 +147,11 @@ def compute_bpp(code, batch_size, prefix, dir='./code/', save=False):
     # Huffman coding
     c = code.data.cpu().numpy().astype(np.int32).flatten()
     tree_size, data_size = huffman_encode(c, prefix, save_dir=dir, save=save)
-    bpp = (tree_size + data_size) / batch_size / 128 / 128 * 8
+    # bpp = (tree_size + data_size) / batch_size / 128 / 128 * 8
+    counter = Counter(list(c))
+    prob = np.array(list(counter.values()))/len(c)
+    entropy = stats.entropy(prob)
+    bpp = entropy * len(c) / batch_size / 128 / 128
     return bpp
 
 
