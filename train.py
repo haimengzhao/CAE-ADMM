@@ -9,10 +9,8 @@ from torch.utils.data import DataLoader
 
 from tensorboardX import SummaryWriter
 
-from skimage.measure import compare_psnr
-
 from model import CAEP
-from utils import BSDS500Crop128, Kodak, compute_bpp, save_kodak_img
+from utils import BSDS500Crop128, Kodak, compute_bpp, save_kodak_img, compute_psnr
 import pytorch_msssim
 
 
@@ -82,7 +80,7 @@ def train(args):
             x = crop.cuda()
             y, c = model(x)
 
-            psnr = compare_psnr(x, y, data_range=1)
+            psnr = compute_psnr(x, y)
             mse = MSE(y, x)
             ssim = SSIM(x, y)
             msssim = MSSSIM(x, y)
@@ -95,8 +93,8 @@ def train(args):
             loss.backward()
             optimizer.step()
 
-            print('[%3d/%3d][%5d/%5d] Loss: %f, SSIM: %f, MSSSIM: %f, Norm of Code: %f, BPP: %2f' %
-                  (ei, args.num_epochs + args.res_epoch, bi, len(dataloader), loss, ssim, msssim, peanalty, bpp))
+            print('[%3d/%3d][%5d/%5d] Loss: %f, SSIM: %f, MSSSIM: %f, PSNR: %f, Norm of Code: %f, BPP: %2f' %
+                  (ei, args.num_epochs + args.res_epoch, bi, len(dataloader), loss, ssim, msssim, psnr, peanalty, bpp))
             writer.add_scalar('batch_train/loss', loss, ei * len(dataloader) + bi)
             writer.add_scalar('batch_train/ssim', ssim, ei * len(dataloader) + bi)
             writer.add_scalar('batch_train/msssim', msssim, ei * len(dataloader) + bi)
@@ -138,7 +136,7 @@ def train(args):
                     x = torch.Tensor(patches[:, i, j, :, :, :]).cuda()
                     y, c = model(x)
 
-                    psnr = compare_psnr(x, y, data_range=1)
+                    psnr = compute_psnr(x, y)
                     mse = MSE(y, x)
                     ssim = SSIM(x, y)
                     msssim = MSSSIM(x, y)
@@ -194,7 +192,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_epochs', type=int, default=10)
     parser.add_argument('--res_epoch', type=int, default=0)
-    parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--learning_rate', type=float, default=1e-4)
     parser.add_argument('--load', type=str, default='')
     parser.add_argument('--save_every', type=int, default=50)

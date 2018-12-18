@@ -13,6 +13,14 @@ import sys
 import os
 
 
+def compute_psnr(x, y):
+    y = y.view(y.shape[0], -1)
+    x = x.view(x.shape[0], -1)
+    rmse = torch.sqrt(torch.mean((y - x) ** 2, dim=1))
+    psnr = torch.mean(20. * torch.log10(1. / rmse))
+    return psnr.item()
+
+
 def save_imgs(imgs, to_size, name):
     imgs = imgs.view(imgs.size(0), *to_size)
     save_image(imgs, name)
