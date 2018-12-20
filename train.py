@@ -15,7 +15,8 @@ import pytorch_msssim
 
 
 num_resblocks = 15
-rho = 1e-2
+rho = 1e-1
+pruning_ratio = 0.8
 
 
 def train(args):
@@ -56,6 +57,13 @@ def train(args):
 
     writer = SummaryWriter(log_dir=f'TBXLog/{args.exp_name}')
 
+    # ADMM variables
+    Z = torch.zeros(32, 16, 16).cuda()
+    U = torch.zeros(32, 16, 16).cuda()
+    Z.requires_grad = False
+    U.requires_grad = False
+
+
     if args.load != '':
         pretrained_state_dict = torch.load(f"./chkpt/{args.load}/model.state")
         current_state_dict = model.state_dict()
@@ -64,10 +72,13 @@ def train(args):
         if args.load == args.exp_name:
             optimizer.load_state_dict(torch.load(f"./chkpt/{args.load}/opt.state"))
             scheduler.load_state_dict(torch.load(f"./chkpt/{args.load}/lr.state"))
+            Z = torch.load(f"./chkpt/{args.load}/Z.state")
+            U = torch.load(f"./chkpt/{args.load}/U.state")
         print('Model Params Loaded.')
 
     model.train()
 
+  
     for ei in range(args.res_epoch + 1, args.res_epoch + args.num_epochs + 1):
         # train
         train_loss = 0
@@ -76,6 +87,9 @@ def train(args):
         train_psnr = 0
         train_peanalty = 0
         train_bpp = 0
+        avg_c = torch.zeros(32, 16, 16).cuda()
+        avg_c.requires_grad = False
+
         for bi, crop in enumerate(dataloader):
             x = crop.cuda()
             y, c = model(x)
@@ -84,10 +98,15 @@ def train(args):
             mse = MSE(y, x)
             ssim = SSIM(x, y)
             msssim = MSSSIM(x, y)
-            peanalty = rho / 2 * torch.norm(c, 2)
+
+            mix = 1000 * (1 - msssim) + 1000 * (1 - ssim) + 1e4 * mse + (45 - psnr)
+            # ADMM Step 1
+            peanalty = rho / 2 * torch.norm(c - Z + U, 2)
             bpp = compute_bpp(c, x.shape[0], 'crop', save=False)
 
-            loss = 100 * (1 - msssim) + peanalty
+            avg_c += torch.mean(c.detach() / (len(dataloader) * args.admm_every), dim=0)
+
+            loss = mix + peanalty
 
             optimizer.zero_grad()
             loss.backward()
@@ -105,7 +124,7 @@ def train(args):
             train_loss += loss.item() / len(dataloader)
             train_ssim += ssim.item() / len(dataloader)
             train_msssim += msssim.item() / len(dataloader)
-            train_psnr += psnr / len(dataloader)
+            train_psnr += psnr.item() / len(dataloader)
             train_peanalty += peanalty.item() / len(dataloader)
             train_bpp += bpp / len(dataloader)
 
@@ -115,6 +134,15 @@ def train(args):
         writer.add_scalar('epoch_train/psnr', train_psnr, ei)
         writer.add_scalar('epoch_train/norm', train_peanalty, ei)
         writer.add_scalar('epoch_train/bpp', train_bpp, ei)
+
+        if ei % args.admm_every == args.admm_every - 1:
+            # ADMM Step 2
+            Z = (avg_c + U).masked_fill_(
+                (torch.Tensor(np.argsort((avg_c + U).data.cpu().numpy(), axis=None))
+                 >= int(pruning_ratio * 32 * 16 * 16)).view(32, 16, 16).cuda(),
+                value=0)
+            # ADMM Step 3
+            U += avg_c - Z
 
         # test
         model.eval()
@@ -140,14 +168,17 @@ def train(args):
                     mse = MSE(y, x)
                     ssim = SSIM(x, y)
                     msssim = MSSSIM(x, y)
-                    peanalty = rho / 2 * torch.norm(c, 2)
+
+                    mix = 1000 * (1 - msssim) + 1000 * (1 - ssim) + 1e4 * mse + (45 - psnr)
+
+                    peanalty = rho / 2 * torch.norm(c - Z + U, 2)
                     bpp = compute_bpp(c, x.shape[0], f'Kodak_patches_{i}_{j}', save=True)
-                    loss = 100 * (1 - msssim) + peanalty
+                    loss = mix + peanalty
 
                     avg_loss += loss.item() / 24
                     avg_ssim += ssim.item() / 24
                     avg_msssim += msssim.item() / 24
-                    avg_psnr += psnr / 24
+                    avg_psnr += psnr.item() / 24
                     avg_peanalty += peanalty.item() / 24
                     avg_bpp += bpp / 24
             
@@ -184,6 +215,8 @@ def train(args):
             torch.save(model.state_dict(), f"./chkpt/{args.exp_name}/model.state")
             torch.save(optimizer.state_dict(), f"./chkpt/{args.exp_name}/opt.state")
             torch.save(scheduler.state_dict(), f"./chkpt/{args.exp_name}/lr.state")
+            torch.save(Z, f"./chkpt/{args.exp_name}/Z.state")
+            torch.save(U, f"./chkpt/{args.exp_name}/U.state")
 
     writer.close()
 
@@ -202,6 +235,7 @@ if __name__ == '__main__':
     parser.add_argument('--testset_path', type=str, default='../Kodak')
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--exp_name', type=str, default='exp1')
+    parser.add_argument('--admm_every', type=int, default=20)
     args = parser.parse_args()
 
     os.makedirs(f"./output", exist_ok=True)
