@@ -16,7 +16,7 @@ import pytorch_msssim
 
 num_resblocks = 15
 rho = 1e-1
-pruning_ratio = 0.8
+pruning_ratio = 0.9
 
 
 def train(args):
@@ -63,22 +63,20 @@ def train(args):
     Z.requires_grad = False
     U.requires_grad = False
 
-
     if args.load != '':
         pretrained_state_dict = torch.load(f"./chkpt/{args.load}/model.state")
         current_state_dict = model.state_dict()
         current_state_dict.update(pretrained_state_dict)
         model.load_state_dict(current_state_dict)
+        Z = torch.load(f"./chkpt/{args.load}/Z.state")
+        U = torch.load(f"./chkpt/{args.load}/U.state")
         if args.load == args.exp_name:
             optimizer.load_state_dict(torch.load(f"./chkpt/{args.load}/opt.state"))
             scheduler.load_state_dict(torch.load(f"./chkpt/{args.load}/lr.state"))
-            Z = torch.load(f"./chkpt/{args.load}/Z.state")
-            U = torch.load(f"./chkpt/{args.load}/U.state")
         print('Model Params Loaded.')
 
     model.train()
 
-  
     for ei in range(args.res_epoch + 1, args.res_epoch + args.num_epochs + 1):
         # train
         train_loss = 0
@@ -139,7 +137,7 @@ def train(args):
             # ADMM Step 2
             Z = (avg_c + U).masked_fill_(
                 (torch.Tensor(np.argsort((avg_c + U).data.cpu().numpy(), axis=None))
-                 >= int(pruning_ratio * 32 * 16 * 16)).view(32, 16, 16).cuda(),
+                 >= int((1 - pruning_ratio) * 32 * 16 * 16)).view(32, 16, 16).cuda(),
                 value=0)
             # ADMM Step 3
             U += avg_c - Z
