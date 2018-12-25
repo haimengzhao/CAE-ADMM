@@ -4,10 +4,11 @@ from utils import conv_downsample, conv_same, res_layers, Bottleneck, sub_pix, q
 
 
 class CAEP(nn.Module):
-    def __init__(self, num_resblocks):
+    def __init__(self, num_resblocks, shape):
         super(CAEP, self).__init__()
         self.num_resblocks = num_resblocks
         self.threshold = torch.Tensor([1e-4])
+        self.shape = shape
         self.prune = False
 
         # Encoder
@@ -19,14 +20,18 @@ class CAEP(nn.Module):
         self.E_PReLU_3 = nn.PReLU()
         self.E_Res = res_layers(128, num_blocks=self.num_resblocks)
         self.E_Conv_4 = conv_downsample(128, 64)  # 128,64,64 => 64,32,32
-        self.E_Conv_5 = conv_downsample(64, 32)  # for fine tuning 32,16,16
+        if self.shape[1]==16:
+            self.E_Conv_5 = conv_downsample(64, self.shape[0])  # for fine tuning 32,16,16
+        if self.shape[1]==32:
+            self.E_Conv_5 = conv_same(64, self.shape[0]) 
+        
 
         self.Pruner = nn.Threshold(self.threshold, 0, inplace=True)
 
         # max_bpp = 32*16*16/128/128 * bits per int = 1 * bits per int
 
         # Decoder
-        self.D_SubPix_0 = sub_pix(32, 64, 2)  # for fine tuning
+        self.D_SubPix_0 = sub_pix(self.shape[0], 64, int(32/self.shape[1]))  # for fine tuning
         self.D_SubPix_1 = sub_pix(64, 128, 2)  # 64,32,32 => 128,64,64
         self.D_PReLU_1 = nn.PReLU()
         self.D_Res = res_layers(128, num_blocks=self.num_resblocks)

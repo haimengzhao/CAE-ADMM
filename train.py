@@ -14,14 +14,16 @@ from utils import BSDS500Crop128, Kodak, compute_bpp, save_kodak_img, compute_ps
 import pytorch_msssim
 
 
+shape = (64, 16, 16)
 num_resblocks = 15
 rho = 1e-1
 pruning_ratio = 0.9
 
 
 def train(args):
+
     print('Number of GPUs available: ' + str(torch.cuda.device_count()))
-    model = nn.DataParallel(CAEP(num_resblocks).cuda())
+    model = nn.DataParallel(CAEP(num_resblocks, shape).cuda())
     print('Done Setup Model.')
 
     dataset = BSDS500Crop128(args.dataset_path)
@@ -58,8 +60,8 @@ def train(args):
     writer = SummaryWriter(log_dir=f'TBXLog/{args.exp_name}')
 
     # ADMM variables
-    Z = torch.zeros(32, 16, 16).cuda()
-    U = torch.zeros(32, 16, 16).cuda()
+    Z = torch.zeros(*shape).cuda()
+    U = torch.zeros(*shape).cuda()
     Z.requires_grad = False
     U.requires_grad = False
 
@@ -68,8 +70,8 @@ def train(args):
         current_state_dict = model.state_dict()
         current_state_dict.update(pretrained_state_dict)
         model.load_state_dict(current_state_dict)
-        Z = torch.load(f"./chkpt/{args.load}/Z.state")
-        U = torch.load(f"./chkpt/{args.load}/U.state")
+        # Z = torch.load(f"./chkpt/{args.load}/Z.state")
+        # U = torch.load(f"./chkpt/{args.load}/U.state")
         if args.load == args.exp_name:
             optimizer.load_state_dict(torch.load(f"./chkpt/{args.load}/opt.state"))
             scheduler.load_state_dict(torch.load(f"./chkpt/{args.load}/lr.state"))
@@ -85,7 +87,7 @@ def train(args):
         train_psnr = 0
         train_peanalty = 0
         train_bpp = 0
-        avg_c = torch.zeros(32, 16, 16).cuda()
+        avg_c = torch.zeros(*shape).cuda()
         avg_c.requires_grad = False
 
         for bi, crop in enumerate(dataloader):
@@ -105,6 +107,8 @@ def train(args):
             avg_c += torch.mean(c.detach() / (len(dataloader) * args.admm_every), dim=0)
 
             loss = mix + peanalty
+            if ei == 1:
+                loss = 1e5 * mse  # warm up
 
             optimizer.zero_grad()
             loss.backward()
@@ -137,7 +141,7 @@ def train(args):
             # ADMM Step 2
             Z = (avg_c + U).masked_fill_(
                 (torch.Tensor(np.argsort((avg_c + U).data.cpu().numpy(), axis=None))
-                 >= int((1 - pruning_ratio) * 32 * 16 * 16)).view(32, 16, 16).cuda(),
+                 >= int((1 - pruning_ratio) * shape[0] * shape[1] * shape[2])).view(*shape).cuda(),
                 value=0)
             # ADMM Step 3
             U += avg_c - Z
