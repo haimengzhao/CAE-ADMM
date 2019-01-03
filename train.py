@@ -14,7 +14,6 @@ from utils import BSDS500Crop128, Kodak, compute_bpp, save_kodak_img, compute_ps
 import pytorch_msssim
 
 
-shape = (64, 16, 16)
 num_resblocks = 15
 rho = 1e-1
 pruning_ratio = 0.9
@@ -23,7 +22,7 @@ pruning_ratio = 0.9
 def train(args):
 
     print('Number of GPUs available: ' + str(torch.cuda.device_count()))
-    model = nn.DataParallel(CAEP(num_resblocks, shape).cuda())
+    model = nn.DataParallel(CAEP(num_resblocks).cuda())
     print('Done Setup Model.')
 
     dataset = BSDS500Crop128(args.dataset_path)
@@ -60,8 +59,8 @@ def train(args):
     writer = SummaryWriter(log_dir=f'TBXLog/{args.exp_name}')
 
     # ADMM variables
-    Z = torch.zeros(*shape).cuda()
-    U = torch.zeros(*shape).cuda()
+    Z = torch.zeros(16,32,32).cuda()
+    U = torch.zeros(16,32,32).cuda()
     Z.requires_grad = False
     U.requires_grad = False
 
@@ -87,7 +86,7 @@ def train(args):
         train_psnr = 0
         train_peanalty = 0
         train_bpp = 0
-        avg_c = torch.zeros(*shape).cuda()
+        avg_c = torch.zeros(16,32,32).cuda()
         avg_c.requires_grad = False
 
         for bi, crop in enumerate(dataloader):
@@ -107,7 +106,7 @@ def train(args):
             avg_c += torch.mean(c.detach() / (len(dataloader) * args.admm_every), dim=0)
 
             loss = mix + peanalty
-            if ei == 1:
+            if ei == 1 and args.load != args.exp_name:
                 loss = 1e5 * mse  # warm up
 
             optimizer.zero_grad()
@@ -141,7 +140,7 @@ def train(args):
             # ADMM Step 2
             Z = (avg_c + U).masked_fill_(
                 (torch.Tensor(np.argsort((avg_c + U).data.cpu().numpy(), axis=None))
-                 >= int((1 - pruning_ratio) * shape[0] * shape[1] * shape[2])).view(*shape).cuda(),
+                 >= int((1 - pruning_ratio) * 16 * 32 * 32)).view(16, 32, 32).cuda(),
                 value=0)
             # ADMM Step 3
             U += avg_c - Z
