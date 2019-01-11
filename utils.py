@@ -62,6 +62,7 @@ def quantize(x):
     y = x + eps
     return y
 
+
 class Bottleneck(nn.Module):
     def __init__(self, planes):
         super(Bottleneck, self).__init__()
