@@ -1,5 +1,8 @@
 # CAE-P: Compressive AutoEncoder with Pruning Based on ADMM
 
+## Paper (arXiv)
+[arXiv:1901.07196 [cs.CV]](https://arxiv.org/abs/1901.07196)
+
 ## Model Architecture
 ![Model Architecture](https://raw.github.com/JasonZHM/CAEP/master/fig/model_new.jpg)
 
