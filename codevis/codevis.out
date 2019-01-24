@@ -1,0 +1,7 @@
+Number of GPUs available: 4
+Done Setup Model_before_pruning.
+Done Setup Model_after_pruning.
+Ratio of zero elements before pruning : 11.64%
+Ratio of zero elements after pruning : 25.98%
+The increased ratio of zeros : 123.09 %
+The decreased ratio of non-zeros : -16.22 %
