@@ -6,6 +6,14 @@
 ## Model Architecture
 ![Model Architecture](https://raw.github.com/JasonZHM/CAEP/master/fig/model_new.jpg)
 
+## Performance
+![](https://raw.github.com/JasonZHM/CAEP/master/fig/legend.jpg)
+![](https://raw.github.com/JasonZHM/CAEP/master/fig/ssim.jpg)
+![](https://raw.github.com/JasonZHM/CAEP/master/fig/msssim.jpg)
+
+## Example
+![bpp 0.3](https://raw.github.com/JasonZHM/CAEP/master/fig/compare_0.3.jpg)
+
 ## Acknowledgement
 pytorch-msssim: Implementation of MS-SSIM in PyTorch is from [pytorch-msssim]( https://github.com/jorge-pessoa/pytorch-msssim)
 
