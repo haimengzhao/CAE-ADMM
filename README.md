@@ -8,8 +8,7 @@
 
 ## Performance
 ![](https://raw.github.com/JasonZHM/CAEP/master/fig/legend.jpg)
-![](https://raw.github.com/JasonZHM/CAEP/master/fig/ssim.jpg)
-![](https://raw.github.com/JasonZHM/CAEP/master/fig/msssim.jpg)
+![](https://raw.github.com/JasonZHM/CAEP/master/fig/ssim.jpg) ![](https://raw.github.com/JasonZHM/CAEP/master/fig/msssim.jpg)
 
 ## Example
 ![bpp 0.3](https://raw.github.com/JasonZHM/CAEP/master/fig/compare_0.3.jpg)
