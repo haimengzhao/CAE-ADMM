@@ -1,4 +1,4 @@
-# CAE-P: Compressive AutoEncoder with Pruning Based on ADMM
+# CAE-ADMM: Compressive AutoEncoder with Pruning Based on ADMM
 
 ## Paper (arXiv)
 [arXiv:1901.07196 [cs.CV]](https://arxiv.org/abs/1901.07196)
