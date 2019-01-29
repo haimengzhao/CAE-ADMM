@@ -151,6 +151,40 @@ class Kodak(Dataset):
     def __len__(self):
         return len(self.files)
 
+class GeneralDS(Dataset):
+    def __init__(self, folder_path):
+        self.files = sorted(glob.glob('%s/*.*' % folder_path))
+
+    def __getitem__(self, index):
+        path = self.files[index % len(self.files)]
+        img = np.array(Image.open(path))
+        #print(img.shape)
+        if img.shape[0] < 768 and img.shape[1] > img.shape[0]:
+            img = img.transpose((1, 0, 2))
+        if img.shape[0] >= 768 or img.shape[1] >= 512:
+            img = img[:768,:512,:]
+
+        h, w, c = img.shape
+
+        img = img / 255.0
+
+        # (768,512)--> 6*4 128*128
+
+        patches = np.array(np.split(np.array(np.split(img, 6, axis=0)), 4, axis=2))
+        patches = np.transpose(patches, (1, 0, 4, 2, 3))
+
+        img = np.transpose(img, (2, 0, 1))
+        img = torch.from_numpy(img).float()
+        patches = torch.from_numpy(patches).float()
+
+        return img, patches, path
+
+    def get_random(self):
+        i = np.random.randint(0, len(self.files))
+        return self[i]
+
+    def __len__(self):
+        return len(self.files)
 
 def compute_bpp(code, batch_size, prefix, dir='./code/', save=False):
     # Huffman coding

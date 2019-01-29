@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from model import CAEP
-from utils import Kodak
+from utils import Kodak,GeneralDS,compute_bpp
 from torchvision.utils import make_grid, save_image
 from torch.utils.data import DataLoader
 
@@ -24,7 +24,7 @@ model_after.load_state_dict(current_state_dict)
 model_after.eval()
 print('Done Setup Model_after_pruning.')
 
-dataset = Kodak('./codevis/')
+dataset = Kodak('/data2/CAE-ADMM/codevis/')
 
 img = dataset[0][0]
 patches = dataset[0][1]
@@ -78,11 +78,15 @@ norm_after = norm_range(out_after)
 masked_after = norm_before.masked_fill_(out_after == 0, 0)
 save_image(make_grid(masked_after, nrow=6), './codevis/kodim23_masked_code_after.png')
 
-whole_dataset = Kodak('./Kodak/')
+whole_dataset = GeneralDS('./mixed/')
 dataloader = DataLoader(
     whole_dataset,
-    batch_size=whole_dataset.__len__()
+    batch_size=10,
+    sampler=SequentialSampler(whole_dataset)
 )
+
+bpp_before=[]
+bpp_after=[]
 
 for bi, (img, patches, _) in enumerate(dataloader):
     stacki = []
@@ -91,6 +95,11 @@ for bi, (img, patches, _) in enumerate(dataloader):
         for j in range(4):
             x = torch.Tensor(patches[:, i, j, :, :, :]).cuda()
             y, c = model_before(x)
+            bpp = compute_bpp(c, x.shape[0], 'crop', save=False)
+            
+            #print(bpp)
+            bpp_before.append(bpp)
+
             stackj.append(c.cpu().data)
         stacki.append(torch.cat(stackj, dim=3))
     avg_out_before = torch.cat(stacki, dim=2)
@@ -101,6 +110,12 @@ for bi, (img, patches, _) in enumerate(dataloader):
         for j in range(4):
             x = torch.Tensor(patches[:, i, j, :, :, :]).cuda()
             y, c = model_after(x)
+ 
+            bpp = compute_bpp(c, x.shape[0], 'crop', save=False)
+
+            #print(bpp)
+            bpp_after.append(bpp)
+
             stackj.append(c.cpu().data)
         stacki.append(torch.cat(stackj, dim=3))
     avg_out_after = torch.cat(stacki, dim=2)
@@ -120,3 +135,8 @@ print('The increased ratio of zeros : %.2f %%' % (relative_change * 100))
 # the decreased ratio of non-zeros
 relative_change_non_zero = ((1 - r_after_p) - (1 - r_before_p)) / (1 - r_before_p)
 print('The decreased ratio of non-zeros : %.2f %%' % (relative_change_non_zero * 100))
+
+print('bpp after ',np.array(bpp_after).mean())
+
+print('bpp before ',np.array(bpp_before).mean())
+
