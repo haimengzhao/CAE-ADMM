@@ -22,25 +22,28 @@ for fichier in filelist[:]:
 import time
 
 times = []
-for im in []:#tqdm(filelist):
+
+for im in tqdm(filelist):
     start_time = time.time()
     nim = Image.open('mixed/'+im) 
     #print(nim.size)
-    nim.save('jpeg/'+im, 'JPEG', quality=100)
+    #print(im)
+    nim.save('jpeg/'+im, 'JPEG', quality=16)
 
     times.append(time.time() - start_time)
     
-#print('JPEG: avg time ',np.array(times).mean())
+print('JPEG: avg time ',np.array(times).mean())
 
-for im in []:#tqdm(filelist):
+
+for im in tqdm(filelist):
     start_time = time.time()
     nim = Image.open('mixed/'+im)
     #print(nim.size)
-    nim.save('jpeg2000/'+im, 'JPEG2000', quality=100)
+    nim.save('jpeg2000/'+im, 'JPEG2000', quality_mode="rates", quality_layers=[41,43,48,48])
 
     times.append(time.time() - start_time)
 
-#print('JPEG2000: avg time ',np.array(times).mean())
+print('JPEG2000: avg time ',np.array(times).mean())
 	
 d1 = GeneralDS('./mixed/')
 dl1 = DataLoader(
@@ -75,7 +78,7 @@ for i, atup in enumerate(zip(dl1,dl2)):
    im2 = atup[1][0]
    #print(im1.size())
    jS.append(SSIM(im1,im2).item())
-   print(jS[-1])
+   #print(jS[-1])
    #break
 
 print("JPEG: ",np.array(jS).mean())
