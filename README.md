@@ -1,6 +1,6 @@
 # CAE-ADMM: Compressive AutoEncoder with Pruning Based on ADMM
 
-## Paper (arXiv)
+## Paper (outdated)
 [arXiv:1901.07196 [cs.CV]](https://arxiv.org/abs/1901.07196)
 
 ## Model Architecture
