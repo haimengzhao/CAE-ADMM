@@ -15,7 +15,7 @@ We introduce CAE-ADMM (ADMM-pruned compressive autoencoder), a lossy image compr
 ![Model Architecture](https://raw.github.com/JasonZHM/CAE-ADMM/master/experiments/fig/model_new.jpg)
 
 ## Performance
-![](https://raw.github.com/JasonZHM/CAE-ADMM/master/experiments/fig/legend-new.jpg)
+![](https://raw.github.com/JasonZHM/CAE-ADMM/master/experiments/fig/legend-new.png)
 ![](https://raw.github.com/JasonZHM/CAE-ADMM/master/experiments/fig/ssim.jpg) ![](https://raw.github.com/JasonZHM/CAE-ADMM/master/experiments/fig/msssim.jpg)
 
 ## Example
