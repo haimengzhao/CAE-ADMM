@@ -70,14 +70,14 @@ class CAEP(nn.Module):
         x = self.E_Res(x)
         x = self.E_Conv_4(x)
         x = self.E_Conv_5(x)
-        # x = self.E_Conv_6(x)
+        x = self.E_Conv_6(x)
 
         if self.prune:
             x = self.Pruner(x, self.threshold)
         x = quantize(x)
-
-        # y = self.D_SubPix_00(x)
-        y = self.D_SubPix_0(x)
+        #print(self.D_SubPix_00)
+        y = self.D_SubPix_00(x)
+        y = self.D_SubPix_0(y)
         y = self.D_SubPix_1(y)
         y = self.D_PReLU_1(y)
         y = self.D_Res(y)
