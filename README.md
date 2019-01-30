@@ -20,7 +20,7 @@ We introduce CAE-ADMM (ADMM-pruned compressive autoencoder), a lossy image compr
 
 ## Example
 ![bpp 0.3](https://raw.github.com/JasonZHM/CAE-ADMM/master/experiments/fig/compare_03-new.jpg)
-![bpp 0.3](https://raw.github.com/JasonZHM/CAE-ADMM/master/experiments/fig/latent-new.jpg)
+![bpp 0.3](https://raw.github.com/JasonZHM/CAE-ADMM/master/experiments/fig/latent.jpg)
 
 ## Acknowledgement
 pytorch-msssim: Implementation of MS-SSIM in PyTorch is from [pytorch-msssim]( https://github.com/jorge-pessoa/pytorch-msssim)
