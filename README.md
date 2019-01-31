@@ -8,7 +8,7 @@ Haimeng Zhao, Peiyuan Liao
 
 We introduce CAE-ADMM (ADMM-pruned compressive autoencoder), a lossy image compression model, inspired by researches in neural architecture search (NAS) and is capable of implicitly optimizing the bitrate without the use of an entropy estimator. Our experiments show that by introducing alternating direction method of multipliers (ADMM) to the model pipeline, the pruning paradigm yields more accurate results (SSIM/MS-SSIM-wise) when compared to entropy-based approaches and that of traditional codecs (JPEG, JPEG 2000, etc.) while maintaining acceptable inference speed. We further explore the effectiveness of the pruning method in CAE-ADMM by examining the generated latent codes.
 
-## Paper (outdated)
+## Paper
 [arXiv:1901.07196 [cs.CV]](https://arxiv.org/abs/1901.07196)
 
 ## Model Architecture
