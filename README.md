@@ -31,14 +31,14 @@ Comparison of latent code before and after pruning for kodim21. For the sake of 
 
 ## Citation
 If you useIf you use these models in your research, please cite:
-'''
+```
 @article{zhao2019cae,
   title={CAE-ADMM: Implicit Bitrate Optimization via ADMM-based Pruning in Compressive Autoencoders},
   author={Zhao, Haimeng and Liao, Peiyuan},
   journal={arXiv preprint arXiv:1901.07196},
   year={2019}
 }
-'''
+```
 
 ## Acknowledgement
 pytorch-msssim: Implementation of MS-SSIM in PyTorch is from [pytorch-msssim]( https://github.com/jorge-pessoa/pytorch-msssim)
