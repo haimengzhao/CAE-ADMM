@@ -30,7 +30,7 @@ Comparison of different method with respect to SSIM and MS-SSIM on the Kodak Pho
 Comparison of latent code before and after pruning for kodim21. For the sake of clarity, we marked zero values in the feature map before normalization as black.
 
 ## Citation
-If you useIf you use these models in your research, please cite:
+If you use these models in your research, please cite:
 ```
 @article{zhao2019cae,
   title={CAE-ADMM: Implicit Bitrate Optimization via ADMM-based Pruning in Compressive Autoencoders},
