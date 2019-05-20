@@ -3,4 +3,4 @@ data/Kodak/*
 data/mixed/*
 out/jpeg/*
 out/jpeg2000/*
-
+.idea/*

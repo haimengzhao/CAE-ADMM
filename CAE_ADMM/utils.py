@@ -193,7 +193,7 @@ def compute_bpp(code, batch_size, prefix, dir='./code/', save=False):
     # bpp = (tree_size + data_size) / batch_size / 128 / 128 * 8
     counter = Counter(list(c))
     prob = np.array(list(counter.values()))/len(c)
-    entropy = stats.entropy(prob)
+    entropy = stats.entropy(prob, base=2)
     bpp = entropy * len(c) / batch_size / 128 / 128
     return bpp
 
