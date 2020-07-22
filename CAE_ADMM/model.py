@@ -4,7 +4,7 @@ from utils import conv_downsample, conv_same, res_layers, Bottleneck, sub_pix, q
 
 
 class CAEP(nn.Module):
-    def __init__(self, num_resblocks,final_len):
+    def __init__(self, num_resblocks, final_len):
         super(CAEP, self).__init__()
         self.num_resblocks = num_resblocks
         self.threshold = torch.Tensor([1e-4])

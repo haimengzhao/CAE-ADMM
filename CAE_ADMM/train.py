@@ -65,15 +65,15 @@ def train(args):
     U.requires_grad = False
 
     if args.load != '':
-        pretrained_state_dict = torch.load(f"./chkpt/{args.load}/model.state")
+        pretrained_state_dict = torch.load(f"./ckpt/{args.load}/model.state")
         current_state_dict = model.state_dict()
         current_state_dict.update(pretrained_state_dict)
         model.load_state_dict(current_state_dict)
-        # Z = torch.load(f"./chkpt/{args.load}/Z.state")
-        # U = torch.load(f"./chkpt/{args.load}/U.state")
+        # Z = torch.load(f"./ckpt/{args.load}/Z.state")
+        # U = torch.load(f"./ckpt/{args.load}/U.state")
         if args.load == args.exp_name:
-            optimizer.load_state_dict(torch.load(f"./chkpt/{args.load}/opt.state"))
-            scheduler.load_state_dict(torch.load(f"./chkpt/{args.load}/lr.state"))
+            optimizer.load_state_dict(torch.load(f"./ckpt/{args.load}/opt.state"))
+            scheduler.load_state_dict(torch.load(f"./ckpt/{args.load}/lr.state"))
         print('Model Params Loaded.')
 
     model.train()
@@ -101,7 +101,7 @@ def train(args):
             mix = 1000 * (1 - msssim) + 1000 * (1 - ssim) + 1e4 * mse + (45 - psnr)
             # ADMM Step 1
             peanalty = rho / 2 * torch.norm(c - Z + U, 2)
-            bpp = compute_bpp(c, x.shape[0], 'crop', save=False)
+            bpp = compute_bpp(c, x.shape[0])
 
             avg_c += torch.mean(c.detach() / (len(dataloader) * args.admm_every), dim=0)
 
@@ -173,7 +173,7 @@ def train(args):
                     mix = 1000 * (1 - msssim) + 1000 * (1 - ssim) + 1e4 * mse + (45 - psnr)
 
                     peanalty = rho / 2 * torch.norm(c - Z + U, 2)
-                    bpp = compute_bpp(c, x.shape[0], f'Kodak_patches_{i}_{j}', save=True)
+                    bpp = compute_bpp(c, x.shape[0])
                     loss = mix + peanalty
 
                     avg_loss += loss.item() / 24
@@ -213,11 +213,11 @@ def train(args):
 
         # save model
         if ei % args.save_every == args.save_every - 1:
-            torch.save(model.state_dict(), f"./chkpt/{args.exp_name}/model.state")
-            torch.save(optimizer.state_dict(), f"./chkpt/{args.exp_name}/opt.state")
-            torch.save(scheduler.state_dict(), f"./chkpt/{args.exp_name}/lr.state")
-            torch.save(Z, f"./chkpt/{args.exp_name}/Z.state")
-            torch.save(U, f"./chkpt/{args.exp_name}/U.state")
+            torch.save(model.state_dict(), f"./ckpt/{args.exp_name}/model.state")
+            torch.save(optimizer.state_dict(), f"./ckpt/{args.exp_name}/opt.state")
+            torch.save(scheduler.state_dict(), f"./ckpt/{args.exp_name}/lr.state")
+            torch.save(Z, f"./ckpt/{args.exp_name}/Z.state")
+            torch.save(U, f"./ckpt/{args.exp_name}/U.state")
 
     writer.close()
 
@@ -232,15 +232,15 @@ if __name__ == '__main__':
     parser.add_argument('--save_every', type=int, default=50)
     parser.add_argument('--out_every', type=int, default=10)
     parser.add_argument('--shuffle', action='store_true')
-    parser.add_argument('--dataset_path', type=str, default='../dataset')
-    parser.add_argument('--testset_path', type=str, default='../Kodak')
+    parser.add_argument('--dataset_path', type=str, default='../data/BSDS500')
+    parser.add_argument('--testset_path', type=str, default='../data/Kodak')
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--exp_name', type=str, default='exp1')
     parser.add_argument('--admm_every', type=int, default=20)
     args = parser.parse_args()
 
     os.makedirs(f"./output", exist_ok=True)
-    os.makedirs(f"./chkpt/{args.exp_name}", exist_ok=True)
+    os.makedirs(f"./ckpt/{args.exp_name}", exist_ok=True)
     os.makedirs(f"./code", exist_ok=True)
 
     train(args)

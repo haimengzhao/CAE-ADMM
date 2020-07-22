@@ -186,11 +186,8 @@ class GeneralDS(Dataset):
     def __len__(self):
         return len(self.files)
 
-def compute_bpp(code, batch_size, prefix, dir='./code/', save=False):
-    # Huffman coding
+def compute_bpp(code, batch_size):
     c = code.data.cpu().numpy().astype(np.int32).flatten()
-    tree_size, data_size = huffman_encode(c, prefix, save_dir=dir, save=save)
-    # bpp = (tree_size + data_size) / batch_size / 128 / 128 * 8
     counter = Counter(list(c))
     prob = np.array(list(counter.values()))/len(c)
     entropy = stats.entropy(prob, base=2)
